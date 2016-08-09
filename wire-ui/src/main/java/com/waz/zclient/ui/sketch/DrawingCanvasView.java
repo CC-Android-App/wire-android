@@ -359,7 +359,7 @@ public class DrawingCanvasView extends View {
 
         if (isBackgroundBitmapLandscape) {
             matrix.postTranslate(-imageHeight / 2, -imageWidth / 2); // Centers image
-            matrix.postRotate(-backgroundImageRotation.displayOrientation);
+            matrix.postRotate(-backgroundImageRotation.orientation);
             matrix.postTranslate(imageWidth / 2, imageHeight / 2);
         }
         matrix.postTranslate(horizontalMargin, 0);
@@ -368,7 +368,7 @@ public class DrawingCanvasView extends View {
         for (HistoryItem item : historyItems) {
             item.draw(canvas);
         }
-        drawingCanvasCallback.setRotation(backgroundImageRotation.displayOrientation);
+        drawingCanvasCallback.setRotation(backgroundImageRotation.orientation);
         invalidate();
     }
 

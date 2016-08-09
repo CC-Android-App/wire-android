@@ -25,20 +25,22 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 public enum SquareOrientation {
-    NONE(0, 90, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED),
-    PORTRAIT_STRAIGHT(0, 90, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT),
-    PORTRAIT_UPSIDE_DOWN(180, 270, ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT),
-    LANDSCAPE_LEFT(270, 0, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE),
-    LANDSCAPE_RIGHT(90, 180, ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
+    NONE(0, ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED),
+    PORTRAIT_STRAIGHT(0, ActivityInfo.SCREEN_ORIENTATION_PORTRAIT),
+    PORTRAIT_UPSIDE_DOWN(180, ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT),
+    LANDSCAPE_LEFT(270, ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE),
+    LANDSCAPE_RIGHT(90, ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE);
 
-    public final int displayOrientation;
-    public final int cameraDisplayOrientation;
+    public final int orientation;
     public final int activityOrientation;
 
-    SquareOrientation(int displayOrientation, int cameraDisplayOrientation, int activityOrientation) {
-        this.displayOrientation = displayOrientation;
-        this.cameraDisplayOrientation = cameraDisplayOrientation;
+    SquareOrientation(int orientation, int activityOrientation) {
+        this.orientation = orientation;
         this.activityOrientation = activityOrientation;
+    }
+
+    public boolean isLandscape() {
+        return this == LANDSCAPE_LEFT || this == LANDSCAPE_RIGHT;
     }
 
     public static SquareOrientation getOrientation(Activity activity) {
@@ -62,7 +64,7 @@ public enum SquareOrientation {
         int defaultRotation = windowManager.getDefaultDisplay().getRotation();
 
         if (((defaultRotation == Surface.ROTATION_0 || defaultRotation == Surface.ROTATION_180) && config.orientation == Configuration.ORIENTATION_LANDSCAPE) ||
-                ((defaultRotation == Surface.ROTATION_90 || defaultRotation == Surface.ROTATION_270) && config.orientation == Configuration.ORIENTATION_PORTRAIT)) {
+            ((defaultRotation == Surface.ROTATION_90 || defaultRotation == Surface.ROTATION_270) && config.orientation == Configuration.ORIENTATION_PORTRAIT)) {
             landscapeOrientation = true;
         } else {
             landscapeOrientation = false;

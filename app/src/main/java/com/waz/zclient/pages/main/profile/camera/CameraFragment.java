@@ -65,11 +65,9 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
     public static final String TAG = CameraFragment.class.getName();
 
     public static final int REQUEST_GALLERY_CODE = 9411;
-    public static final long CAMERA_ROTATION_COOLDOWN_DELAY = 1600L;
     private static final String INTENT_GALLERY_TYPE = "image/*";
     private static final String CAMERA_CONTEXT = "CAMERA_CONTEXT";
     private static final String SHOW_GALLERY = "SHOW_GALLERY";
-    private static final String SHOW_CAMERA_FEED = "SHOW_CAMERA_FEED";
     private static final String ALREADY_OPENED_GALLERY = "ALREADY_OPENED_GALLERY";
 
     private FrameLayout imagePreviewContainer;
@@ -83,7 +81,6 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
     private CameraFocusView focusView;
 
     private CameraContext cameraContext = null;
-    private boolean showCameraFeed;
     private boolean alreadyOpenedGallery;
 
     private int cameraPreviewAnimationDuration;
@@ -97,21 +94,12 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
     }
 
     public static CameraFragment newInstance(CameraContext cameraContext, boolean showGallery) {
-        return newInstance(cameraContext, showGallery, false);
-    }
-
-    public static CameraFragment newInstance(CameraContext cameraContext, boolean showGallery, boolean showCameraFeed) {
         CameraFragment fragment = new CameraFragment();
         Bundle bundle = new Bundle();
         bundle.putInt(CAMERA_CONTEXT, cameraContext.ordinal());
         bundle.putBoolean(SHOW_GALLERY, showGallery);
-        bundle.putBoolean(SHOW_CAMERA_FEED, showCameraFeed);
         fragment.setArguments(bundle);
         return fragment;
-    }
-
-    public static CameraFragment newRestartedInstance(CameraContext cameraContext, boolean showCameraFeed) {
-        return newInstance(cameraContext, false, showCameraFeed);
     }
 
     @Override
@@ -132,9 +120,7 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup c, Bundle savedInstanceState) {
-        showCameraFeed = getArguments().getBoolean(SHOW_CAMERA_FEED);
         ensureCameraContext();
-
         final View view = inflater.inflate(R.layout.fragment_camera, c, false);
 
         //TODO allow selection of a camera 'facing' for different cameraContexts
@@ -145,9 +131,6 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
         cameraTopControl = ViewUtils.getView(view, R.id.ctp_top_controls);
         cameraTopControl.setCameraTopControlCallback(this);
         cameraTopControl.setAlpha(0);
-        if (cameraPreview.getNumberOfCameras() == 0) {
-            hideCameraFeed();
-        }
         cameraTopControl.setVisibility(View.VISIBLE);
 
         cameraBottomControl = ViewUtils.getView(view, R.id.cbc__bottom_controls);
@@ -159,9 +142,6 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
                 // do nothing but consume event
             }
         });
-        if (showCameraFeed) {
-            cameraBottomControl.setConfirmationMenuVisible(false);
-        }
 
         imagePreviewContainer = ViewUtils.getView(view, R.id.fl__preview_container);
         if (cameraContext != CameraContext.MESSAGE) {
@@ -212,6 +192,7 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
 
     @Override
     public void onDestroyView() {
+        hideCameraFeed();
         imagePreviewContainer = null;
         previewProgressBar = null;
         imageAsset = null;
@@ -242,10 +223,6 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
             return;
         }
         cameraContext = CameraContext.values()[getArguments().getInt(CAMERA_CONTEXT)];
-    }
-
-    public boolean isCameraFeedShown() {
-        return cameraPreview.getVisibility() == View.VISIBLE;
     }
 
     private void disableCameraButtons() {
@@ -369,13 +346,24 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
 
     @Override
     public void onCancelPreview() {
-        final Activity activity = getActivity();
-        if (activity != null &&
-            LayoutSpec.isTablet(activity)) {
-            ViewUtils.unlockOrientation(activity);
-        }
+        previewProgressBar.setVisibility(View.GONE);
 
-        dismissPreview();
+        ObjectAnimator animator = ObjectAnimator.ofFloat(imagePreviewContainer, View.ALPHA, 1, 0);
+        animator.setDuration(cameraControlAnimationDuration);
+        animator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                hideImagePreviewOnAnimationEnd();
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                hideImagePreviewOnAnimationEnd();
+            }
+        });
+        animator.start();
+
+        showCameraFeed();
     }
 
     @Override
@@ -386,21 +374,10 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
 
     @Override
     public void onSendPictureFromPreview(ImageAsset imageAsset, CursorImagesPreviewLayout.Source source) {
-        final Activity activity = getActivity();
-        if (activity != null &&
-            LayoutSpec.isTablet(activity)) {
-            ViewUtils.unlockOrientation(activity);
-        }
-
         getControllerFactory().getCameraController().onBitmapSelected(imageAsset, pictureFromCamera, cameraContext);
     }
 
     private void showPreview(ImageAsset imageAsset, boolean bitmapFromCamera) {
-        if (LayoutSpec.isTablet(getActivity())) {
-            ViewUtils.lockCurrentOrientation(getActivity(),
-                                             getControllerFactory().getOrientationController().getLastKnownOrientation());
-        }
-
         pictureFromCamera = bitmapFromCamera;
         hideCameraFeed();
 
@@ -429,28 +406,6 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
         cameraBottomControl.setVisibility(View.GONE);
     }
 
-    private void dismissPreview() {
-        previewProgressBar.setVisibility(View.GONE);
-
-        int animationDuration = getResources().getInteger(R.integer.camera__control__ainmation__duration);
-        ObjectAnimator animator = ObjectAnimator.ofFloat(imagePreviewContainer, View.ALPHA, 1, 0);
-        animator.setDuration(animationDuration);
-        animator.addListener(new AnimatorListenerAdapter() {
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                hideImagePreviewOnAnimationEnd();
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                hideImagePreviewOnAnimationEnd();
-            }
-        });
-        animator.start();
-
-        showCameraFeed();
-    }
-
     private void hideImagePreviewOnAnimationEnd() {
         if (imagePreviewContainer != null &&
             cameraBottomControl != null) {
@@ -460,6 +415,10 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
     }
 
     private void showCameraFeed() {
+        final Activity activity = getActivity();
+        if (activity != null && LayoutSpec.isTablet(activity)) {
+            ViewUtils.lockCurrentOrientation(activity, SquareOrientation.PORTRAIT_STRAIGHT);
+        }
         ViewUtils.fadeInView(cameraTopControl, cameraControlAnimationDuration);
         if (cameraPreview != null) {
             cameraPreview.setVisibility(View.VISIBLE);
@@ -468,6 +427,9 @@ public class CameraFragment extends BaseFragment<CameraFragment.Container> imple
     }
 
     private void hideCameraFeed() {
+        if (LayoutSpec.isTablet(getActivity())) {
+            ViewUtils.unlockOrientation(getActivity());
+        }
         ViewUtils.fadeOutView(cameraTopControl, cameraControlAnimationDuration);
         if (cameraPreview != null) {
             cameraPreview.setVisibility(View.GONE);

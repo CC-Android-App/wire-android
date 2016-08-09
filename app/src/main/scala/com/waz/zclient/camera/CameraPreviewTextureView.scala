@@ -19,7 +19,6 @@ package com.waz.zclient.camera
 
 import android.content.Context
 import android.graphics.{Matrix, Rect, SurfaceTexture}
-import android.hardware.Camera
 import android.os.Vibrator
 import android.util.AttributeSet
 import android.view.{MotionEvent, OrientationEventListener, TextureView}
@@ -27,9 +26,9 @@ import com.waz.ZLog
 import com.waz.api.ImageAssetFactory
 import com.waz.service.MediaManagerService
 import com.waz.threading.CancellableFuture.CancelException
-import com.waz.threading.{CancellableFuture, Threading}
+import com.waz.threading.Threading
 import com.waz.utils.returning
-import com.waz.zclient.utils.{SquareOrientation, ViewUtils}
+import com.waz.zclient.utils.SquareOrientation
 import com.waz.zclient.{CameraPermission, PermissionsController, R, ViewHelper}
 
 import scala.collection.JavaConverters._
@@ -48,7 +47,6 @@ class CameraPreviewTextureView(val context: Context, val attrs: AttributeSet, va
   private val mediaManager = Option(inject[MediaManagerService]).flatMap(_.mediaManager)
   private val permissionsController = Option(inject[PermissionsController])
 
-  private var loadFuture = CancellableFuture.cancelled[Camera]()
   private var currentTexture = Option.empty[(SurfaceTexture, Int, Int)]
 
   private var observer = Option.empty[CameraPreviewObserver]
@@ -56,10 +54,9 @@ class CameraPreviewTextureView(val context: Context, val attrs: AttributeSet, va
   val orientationListener = returning {
     new OrientationEventListener(context) {
       override def onOrientationChanged(orientation: Int) =
-        controller.squareOrientation ! SquareOrientation.getOrientation(orientation, context)
+        controller.deviceOrientation ! SquareOrientation.getOrientation(orientation, context)
     }
   }(_.enable())
-
 
   setSurfaceTextureListener(this)
 
@@ -87,7 +84,6 @@ class CameraPreviewTextureView(val context: Context, val attrs: AttributeSet, va
   def nextCamera() = {
     currentTexture.foreach {
       case (t, w, h) =>
-        loadFuture.cancel()
         controller.releaseCamera()
         controller.setNextCamera()
         startLoading(t, w, h)
@@ -95,31 +91,36 @@ class CameraPreviewTextureView(val context: Context, val attrs: AttributeSet, va
   }
 
   def closeCamera() = {
-    loadFuture.cancel()
     controller.releaseCamera().andThen {
       case _ => observer.foreach(_.onCameraReleased())
     }(Threading.Ui)
   }
 
   private def startLoading(texture: SurfaceTexture, width: Int, height: Int) = {
-    loadFuture = controller.openCamera(texture, width, height)
-    loadFuture.onComplete {
-      case Success(c) => observer.foreach(_.onCameraLoaded())
+    controller.openCamera(texture, width, height).onComplete {
+      case Success(previewSize) =>
+        updateTextureMatrix((getWidth, getHeight), previewSize)
+        observer.foreach(_.onCameraLoaded())
       case Failure(ex : CancelException) =>
       case Failure(_) => observer.foreach(_.onCameraLoadingFailed())
     } (Threading.Ui)
   }
 
-  override def onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) =
+  override def onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) = {
     permissionsController.foreach {
       _.requiring(Set(CameraPermission)) {
         currentTexture = Some((texture, width, height))
         startLoading(texture, width, height)
-      } (R.string.camera_permissions_denied_title, R.string.camera_permissions_denied_message)
+      }(R.string.camera_permissions_denied_title, R.string.camera_permissions_denied_message)
+    }
   }
 
-  //Ignoring for now, but if camera size changes we might get issues
-  override def onSurfaceTextureSizeChanged(surfaceTexture: SurfaceTexture, width: Int, height: Int) = {}
+  override def onSurfaceTextureSizeChanged(surfaceTexture: SurfaceTexture, width: Int, height: Int) = {
+    controller.releaseCamera()
+    controller.openCamera(surfaceTexture, width, height).onSuccess {
+      case previewSize => updateTextureMatrix((getWidth, getHeight), previewSize)
+    }(Threading.Ui)
+  }
 
   override def onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean = {
     currentTexture = None
@@ -130,10 +131,6 @@ class CameraPreviewTextureView(val context: Context, val attrs: AttributeSet, va
   }
 
   override def onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) = {}
-
-  controller.currentPreviewSize.on(Threading.Ui) {
-    case PreviewSize(w, h) => updateTextureMatrix(w, h)
-  }
 
   def getSupportedFlashModes = controller.getSupportedFlashModes.asJava
 
@@ -186,19 +183,12 @@ class CameraPreviewTextureView(val context: Context, val attrs: AttributeSet, va
    * Contributors on StackOverflow:
    *  - Ruslan Yanchyshyn (http://stackoverflow.com/users/779140/ruslan-yanchyshyn)
    */
-  private def updateTextureMatrix(naturalPreviewWidth: Int, naturalPreviewHeight: Int): Unit = {
-
+  private def updateTextureMatrix(viewSize: (Int, Int), previewSize: PreviewSize): Unit = if (previewSize.hasSize) {
     //Assuming that the view width and the surface width are the same - not sure if this will always be true
     val (viewWidth, viewHeight) = (getWidth.toFloat, getHeight.toFloat)
 
-    val (previewWidth, previewHeight) =
-      if (ViewUtils.isInLandscape(getContext.getResources.getConfiguration))
-        (naturalPreviewWidth.toFloat, naturalPreviewHeight.toFloat)
-      else
-        (naturalPreviewHeight.toFloat, naturalPreviewWidth.toFloat)
-
     val ratioSurface = viewWidth / viewHeight
-    val ratioPreview = previewWidth / previewHeight
+    val ratioPreview = previewSize.h / previewSize.w //We always asume the 'activity' is portrait relative to the top of the device.
 
     val (stretchedWidth, stretchedHeight) =
       if (ratioSurface > ratioPreview)
