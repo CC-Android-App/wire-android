@@ -18,12 +18,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.ui.views.TouchFilterableLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                                      xmlns:app="http://schemas.android.com/apk/res-auto"
-                                                      xmlns:tools="http://schemas.android.com/tools"
-                                                      android:layout_width="match_parent"
-                                                      android:layout_height="match_parent"
-                                                      android:orientation="vertical"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              xmlns:tools="http://schemas.android.com/tools"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:orientation="vertical"
     >
 
     <LinearLayout
@@ -139,4 +139,4 @@
 
     </LinearLayout>
 
-</com.waz.zclient.ui.views.TouchFilterableLinearLayout>
+</LinearLayout>

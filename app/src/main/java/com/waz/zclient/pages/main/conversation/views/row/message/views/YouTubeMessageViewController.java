@@ -22,13 +22,9 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
-import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
-import android.support.v4.content.ContextCompat;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
 import com.waz.api.ImageAsset;
 import com.waz.api.LoadHandle;
@@ -36,30 +32,24 @@ import com.waz.api.MediaAsset;
 import com.waz.api.Message;
 import com.waz.api.UpdateListener;
 import com.waz.zclient.R;
-import com.waz.zclient.controllers.selection.MessageActionModeController;
-import com.waz.zclient.core.controllers.tracking.events.media.PlayedYouTubeMessageEvent;
 import com.waz.zclient.core.controllers.tracking.attributes.RangedAttribute;
+import com.waz.zclient.core.controllers.tracking.events.media.PlayedYouTubeMessageEvent;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
-import com.waz.zclient.ui.views.TouchFilterableLayout;
 import com.waz.zclient.pages.main.conversation.views.row.message.RetryMessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
 import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.ui.text.TypefaceTextView;
 import com.waz.zclient.ui.utils.ColorUtils;
 import com.waz.zclient.ui.utils.ResourceUtils;
-import com.waz.zclient.ui.views.TouchFilterableLinearLayout;
 import com.waz.zclient.utils.MessageUtils;
 import com.waz.zclient.utils.ViewUtils;
 
 import java.util.List;
 
 public class YouTubeMessageViewController extends RetryMessageViewController implements View.OnClickListener,
-                                                                                        ImageAsset.BitmapCallback,
-                                                                                        View.OnLongClickListener,
-                                                                                        MessageActionModeController.Selectable {
+                                                                                        ImageAsset.BitmapCallback {
 
-    private TouchFilterableLinearLayout view;
-    private FrameLayout imageContainer;
+    private View view;
     private ImageView imageView;
     private TextMessageWithTimestamp textWithTimestamp;
     private GlyphTextView glyphTextView;
@@ -88,13 +78,10 @@ public class YouTubeMessageViewController extends RetryMessageViewController imp
     public YouTubeMessageViewController(Context context, MessageViewsContainer messageViewsContainer) {
         super(context, messageViewsContainer);
         LayoutInflater inflater = LayoutInflater.from(context);
-        view = (TouchFilterableLinearLayout) inflater.inflate(R.layout.row_conversation_youtube, null);
-        imageContainer = ViewUtils.getView(view, R.id.fl__youtube_image_container);
+        view = inflater.inflate(R.layout.row_conversation_youtube, null);
         textWithTimestamp = ViewUtils.getView(view, R.id.tmwt__message_and_timestamp);
         textWithTimestamp.setMessageViewsContainer(messageViewsContainer);
-        textWithTimestamp.setOnLongClickListener(this);
         imageView = ViewUtils.getView(view, R.id.iv__row_conversation__youtube_image);
-        imageView.setOnLongClickListener(this);
         imageView.setOnClickListener(this);
         errorTextView = ViewUtils.getView(view, R.id.ttv__youtube_message__error);
         glyphTextView = ViewUtils.getView(view, R.id.gtv__youtube_message__play);
@@ -139,7 +126,7 @@ public class YouTubeMessageViewController extends RetryMessageViewController imp
     }
 
     @Override
-    public TouchFilterableLayout getView() {
+    public View getView() {
         return view;
     }
 
@@ -233,35 +220,4 @@ public class YouTubeMessageViewController extends RetryMessageViewController imp
         return bitmapWidth;
     }
 
-    @Override
-    public boolean onLongClick(View v) {
-        if (message == null ||
-            messageViewsContainer == null ||
-            messageViewsContainer.getControllerFactory() == null ||
-            messageViewsContainer.getControllerFactory().isTornDown()) {
-            return false;
-        }
-        messageViewsContainer.getControllerFactory().getMessageActionModeController().selectMessage(message);
-        return true;
-    }
-
-    @Override
-    protected void setSelected(boolean selected) {
-        super.setSelected(selected);
-        if (message == null ||
-            messageViewsContainer == null ||
-            messageViewsContainer.isTornDown() ||
-            getSelectionView() == null) {
-            return;
-        }
-        final int accentColor = messageViewsContainer.getControllerFactory().getAccentColorController().getColor();
-        int targetAccentColor;
-        if (selected) {
-            targetAccentColor = ColorUtils.injectAlpha(selectionAlpha, accentColor);
-        } else {
-            targetAccentColor = ContextCompat.getColor(context, R.color.transparent);
-        }
-        imageContainer.setForeground(new ColorDrawable(targetAccentColor));
-        imageContainer.setForegroundGravity(Gravity.FILL);
-    }
 }

@@ -19,10 +19,10 @@ package com.waz.zclient.pages.main.conversation.views.row.message;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.view.View;
 import android.widget.LinearLayout;
 import com.waz.api.Message;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
-import com.waz.zclient.ui.views.TouchFilterableLayout;
 import com.waz.zclient.pages.main.conversation.views.row.message.views.RecyclingLinearLayout;
 import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
 import com.waz.zclient.pages.main.conversation.views.row.separator.SeparatorViewController;
@@ -51,11 +51,11 @@ public class MessageAndSeparatorViewController implements ConversationItemViewCo
     }
 
     @Override
-    public TouchFilterableLayout getView() {
+    public View getView() {
         RecyclingLinearLayout separatorAndMessageView = new RecyclingLinearLayout(context);
         separatorAndMessageView.setOrientation(LinearLayout.VERTICAL);
-        separatorAndMessageView.addView(separatorViewController.getView().getLayout());
-        separatorAndMessageView.addView(messageViewController.getView().getLayout());
+        separatorAndMessageView.addView(separatorViewController.getView());
+        separatorAndMessageView.addView(messageViewController.getView());
         separatorAndMessageView.setViewController(this);
         return separatorAndMessageView;
     }
@@ -69,4 +69,5 @@ public class MessageAndSeparatorViewController implements ConversationItemViewCo
     public Message getMessage() {
         return messageViewController.getMessage();
     }
+
 }

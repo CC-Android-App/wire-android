@@ -68,8 +68,8 @@ public abstract class RetryMessageViewController extends MessageViewController i
     @CallSuper
     protected void afterInit() {
         super.afterInit();
-        pendingView = ViewUtils.getView(getView().getLayout(), R.id.v__row_conversation__pending);
-        unsentView = ViewUtils.getView(getView().getLayout(), R.id.v__row_conversation__error);
+        pendingView = ViewUtils.getView(getView(), R.id.v__row_conversation__pending);
+        unsentView = ViewUtils.getView(getView(), R.id.v__row_conversation__error);
         updateRunnable = new Runnable() {
             @Override
             public void run() {
@@ -132,7 +132,7 @@ public abstract class RetryMessageViewController extends MessageViewController i
                                          touchScaleFactor,
                                          touchScaleFactor,
                                          touchScaleFactor);
-        FractionalTouchDelegate.setupDelegate(getView().getLayout(), unsentView, sourceFraction);
+        FractionalTouchDelegate.setupDelegate(getView(), unsentView, sourceFraction);
         unsentView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

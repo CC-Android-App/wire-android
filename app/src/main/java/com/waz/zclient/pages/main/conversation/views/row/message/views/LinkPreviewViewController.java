@@ -27,21 +27,18 @@ import com.waz.api.ImageAsset;
 import com.waz.api.LoadHandle;
 import com.waz.api.Message;
 import com.waz.zclient.R;
-import com.waz.zclient.controllers.selection.MessageActionModeController;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.pages.main.conversation.views.row.message.MessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
-import com.waz.zclient.ui.views.TouchFilterableLayout;
 import com.waz.zclient.utils.MessageUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.images.ImageAssetView;
 
 public class LinkPreviewViewController extends MessageViewController implements ImageAssetView.BitmapLoadedCallback,
-                                                                                MessageActionModeController.Selectable,
                                                                                 View.OnClickListener {
 
-    private TouchFilterableLayout view;
+    private View view;
     private TextMessageWithTimestamp textMessageWithTimestamp;
     private View linkPrevieContainerView;
     private TextView titleTextView;
@@ -90,51 +87,20 @@ public class LinkPreviewViewController extends MessageViewController implements 
     public LinkPreviewViewController(Context context,
                                      final MessageViewsContainer messageViewsContainer) {
         super(context, messageViewsContainer);
-        view = (TouchFilterableLayout) View.inflate(context, R.layout.row_conversation_link_preview, null);
-        textMessageWithTimestamp = ViewUtils.getView(view.getLayout(),
-                                                     R.id.cv__row_conversation__link_preview__text_message);
-        linkPrevieContainerView = ViewUtils.getView(view.getLayout(),
-                                                    R.id.cv__row_conversation__link_preview__container);
-        titleTextView = ViewUtils.getView(view.getLayout(), R.id.ttv__row_conversation__link_preview__title);
-        urlTextView = ViewUtils.getView(view.getLayout(), R.id.ttv__row_conversation__link_preview__url);
-        previewImageAssetView = ViewUtils.getView(view.getLayout(), R.id.iv__row_conversation__link_preview__image);
-        progressDotsView = ViewUtils.getView(view.getLayout(),
-                                             R.id.pdv__row_conversation__link_preview__placeholder_dots);
-        previewImageContainerView = ViewUtils.getView(view.getLayout(),
-                                                      R.id.fl__row_conversation__link_preview__image_container);
+        view = View.inflate(context, R.layout.row_conversation_link_preview, null);
+        textMessageWithTimestamp = ViewUtils.getView(view, R.id.cv__row_conversation__link_preview__text_message);
+        linkPrevieContainerView = ViewUtils.getView(view, R.id.cv__row_conversation__link_preview__container);
+        titleTextView = ViewUtils.getView(view, R.id.ttv__row_conversation__link_preview__title);
+        urlTextView = ViewUtils.getView(view, R.id.ttv__row_conversation__link_preview__url);
+        previewImageAssetView = ViewUtils.getView(view, R.id.iv__row_conversation__link_preview__image);
+        progressDotsView = ViewUtils.getView(view, R.id.pdv__row_conversation__link_preview__placeholder_dots);
+        previewImageContainerView = ViewUtils.getView(view, R.id.fl__row_conversation__link_preview__image_container);
         previewImageContainerView.setVisibility(View.GONE);
         previewImageAssetView.setBitmapLoadedCallback(this);
 
         linkPrevieContainerView.setOnClickListener(this);
 
         textMessageWithTimestamp.setMessageViewsContainer(messageViewsContainer);
-        textMessageWithTimestamp.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if (message == null ||
-                    messageViewsContainer == null ||
-                    messageViewsContainer.getControllerFactory() == null ||
-                    messageViewsContainer.getControllerFactory().isTornDown()) {
-                    return false;
-                }
-                messageViewsContainer.getControllerFactory().getMessageActionModeController().selectMessage(message);
-                return true;
-            }
-        });
-
-        linkPrevieContainerView.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if (message == null ||
-                    messageViewsContainer == null ||
-                    messageViewsContainer.getControllerFactory() == null ||
-                    messageViewsContainer.getControllerFactory().isTornDown()) {
-                    return false;
-                }
-                messageViewsContainer.getControllerFactory().getMessageActionModeController().selectMessage(message);
-                return true;
-            }
-        });
     }
 
     @Override
@@ -143,7 +109,7 @@ public class LinkPreviewViewController extends MessageViewController implements 
     }
 
     @Override
-    public TouchFilterableLayout getView() {
+    public View getView() {
         return view;
     }
 

@@ -18,11 +18,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.ui.views.TouchFilterableFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                                     xmlns:app="http://schemas.android.com/apk/res-auto"
-                                                     android:layout_width="match_parent"
-                                                     android:layout_height="match_parent"
-                                                     android:orientation="vertical"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent"
+             android:orientation="vertical"
     >
 
     <com.waz.zclient.pages.main.conversation.views.row.message.views.ProgressDotsView
@@ -32,7 +32,7 @@
         android:visibility="gone"
         />
 
-    <com.waz.zclient.ui.views.TouchFilterableLinearLayout
+    <LinearLayout
         android:id="@+id/tfll__audio_message_container"
         android:layout_width="match_parent"
         android:layout_height="@dimen/content__audio_message__view_height"
@@ -70,6 +70,6 @@
             android:layout_gravity="center"
             />
 
-    </com.waz.zclient.ui.views.TouchFilterableLinearLayout>
+    </LinearLayout>
 
-</com.waz.zclient.ui.views.TouchFilterableFrameLayout>
+</FrameLayout>

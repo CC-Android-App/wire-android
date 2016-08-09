@@ -20,9 +20,6 @@ package com.waz.zclient.pages.main.conversation.views.row.message.views;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.drawable.ColorDrawable;
-import android.support.v4.content.ContextCompat;
-import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -32,29 +29,24 @@ import com.waz.api.ImageAsset;
 import com.waz.api.LoadHandle;
 import com.waz.api.UpdateListener;
 import com.waz.zclient.R;
-import com.waz.zclient.controllers.selection.MessageActionModeController;
+import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
 import com.waz.zclient.controllers.singleimage.ISingleImageController;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.pages.main.conversation.views.row.message.RetryMessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
 import com.waz.zclient.ui.theme.ThemeUtils;
-import com.waz.zclient.ui.utils.ColorUtils;
 import com.waz.zclient.ui.views.FilledCircularBackgroundDrawable;
-import com.waz.zclient.ui.views.TouchFilterableLayout;
-import com.waz.zclient.ui.views.TouchFilterableLinearLayout;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.views.LoadingIndicatorView;
 import timber.log.Timber;
 
-public class ImageMessageViewController extends RetryMessageViewController implements View.OnLongClickListener,
-                                                                                      View.OnClickListener,
-                                                                                      MessageActionModeController.Selectable {
+public class ImageMessageViewController extends RetryMessageViewController implements View.OnClickListener,
+                                                                                      AccentColorObserver{
 
     private static final String FULL_IMAGE_LOADED = "FULL_IMAGE_LOADED";
 
-    private TouchFilterableLinearLayout view;
-    private FrameLayout selectionContainer;
+    private View view;
     private FrameLayout errorViewContainer;
     private FrameLayout imageContainer;
     private ImageView gifImageView;
@@ -72,11 +64,9 @@ public class ImageMessageViewController extends RetryMessageViewController imple
     @SuppressLint("InflateParams")
     public ImageMessageViewController(Context context, MessageViewsContainer messageViewContainer) {
         super(context, messageViewContainer);
-        view = (TouchFilterableLinearLayout) View.inflate(context, R.layout.row_conversation_image, null);
-        selectionContainer = ViewUtils.getView(view, R.id.fl__single_image_container);
+        view = View.inflate(context, R.layout.row_conversation_image, null);
         imageContainer = ViewUtils.getView(view, R.id.fl__row_conversation__message_image_container);
         imageContainer.setOnClickListener(this);
-        imageContainer.setOnLongClickListener(this);
         gifImageView = ViewUtils.getView(view, R.id.iv__row_conversation__message_image);
         polkadotView = ViewUtils.getView(view, R.id.iv__row_conversation__message_polkadots);
         errorViewContainer = ViewUtils.getView(view, R.id.fl__row_conversation__message_error_container);
@@ -160,6 +150,7 @@ public class ImageMessageViewController extends RetryMessageViewController imple
         imageAsset.addUpdateListener(imageAssetUpdateListener);
         loadBitmap(finalWidth);
 
+        messageViewsContainer.getControllerFactory().getAccentColorController().addAccentColorObserver(this);
     }
 
     private void loadBitmap(int finalViewWidth) {
@@ -274,12 +265,15 @@ public class ImageMessageViewController extends RetryMessageViewController imple
     }
 
     @Override
-    public TouchFilterableLayout getView() {
+    public View getView() {
         return view;
     }
 
     @Override
     public void recycle() {
+        if (!messageViewsContainer.isTornDown()) {
+            messageViewsContainer.getControllerFactory().getAccentColorController().removeAccentColorObserver(this);
+        }
         errorViewContainer.clearAnimation();
         errorViewContainer.setVisibility(View.VISIBLE);
         gifImageView.animate().cancel();
@@ -306,22 +300,9 @@ public class ImageMessageViewController extends RetryMessageViewController imple
 
     @Override
     public void onAccentColorHasChanged(Object sender, int color) {
-        super.onAccentColorHasChanged(sender, color);
         if (previewLoadingIndicator != null) {
             previewLoadingIndicator.setColor(color);
         }
-    }
-
-    @Override
-    public boolean onLongClick(View v) {
-        if (message == null ||
-            messageViewsContainer == null ||
-            messageViewsContainer.isTornDown() ||
-            getSelectionView() == null) {
-            return false;
-        }
-        messageViewsContainer.getControllerFactory().getMessageActionModeController().selectMessage(message);
-        return true;
     }
 
     @Override
@@ -339,23 +320,4 @@ public class ImageMessageViewController extends RetryMessageViewController imple
         singleImageController.showSingleImage(message);
     }
 
-    @Override
-    protected void setSelected(boolean selected) {
-        super.setSelected(selected);
-        if (message == null ||
-            messageViewsContainer == null ||
-            messageViewsContainer.isTornDown() ||
-            getSelectionView() == null) {
-            return;
-        }
-        final int accentColor = messageViewsContainer.getControllerFactory().getAccentColorController().getColor();
-        int targetAccentColor;
-        if (selected) {
-            targetAccentColor = ColorUtils.injectAlpha(selectionAlpha, accentColor);
-        } else {
-            targetAccentColor = ContextCompat.getColor(context, R.color.transparent);
-        }
-        selectionContainer.setForeground(new ColorDrawable(targetAccentColor));
-        selectionContainer.setForegroundGravity(Gravity.FILL);
-    }
 }

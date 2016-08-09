@@ -20,10 +20,7 @@ package com.waz.zclient.pages.main.conversation.views.row.message.views;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.drawable.ColorDrawable;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.widget.CardView;
-import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.FrameLayout;
@@ -35,18 +32,14 @@ import com.waz.api.Message;
 import com.waz.api.MessageContent;
 import com.waz.zclient.R;
 import com.waz.zclient.controllers.accentcolor.AccentColorObserver;
-import com.waz.zclient.controllers.selection.MessageActionModeController;
-import com.waz.zclient.core.controllers.tracking.events.media.OpenedSharedLocationEvent;
 import com.waz.zclient.core.api.scala.ModelObserver;
+import com.waz.zclient.core.controllers.tracking.events.media.OpenedSharedLocationEvent;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.pages.main.conversation.views.row.message.RetryMessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
 import com.waz.zclient.ui.text.GlyphTextView;
 import com.waz.zclient.ui.theme.ThemeUtils;
-import com.waz.zclient.ui.utils.ColorUtils;
 import com.waz.zclient.ui.views.FilledCircularBackgroundDrawable;
-import com.waz.zclient.ui.views.TouchFilterableLayout;
-import com.waz.zclient.ui.views.TouchFilterableLinearLayout;
 import com.waz.zclient.utils.IntentUtils;
 import com.waz.zclient.utils.LayoutSpec;
 import com.waz.zclient.utils.StringUtils;
@@ -54,15 +47,12 @@ import com.waz.zclient.utils.ViewUtils;
 import timber.log.Timber;
 
 public class LocationMessageViewController extends RetryMessageViewController implements OnClickListener,
-                                                                                         View.OnLongClickListener,
-                                                                                         AccentColorObserver,
-                                                                                         MessageActionModeController.Selectable {
+                                                                                         AccentColorObserver {
 
     private static final String TAG = LocationMessageViewController.class.getName();
     private static final String FULL_IMAGE_LOADED = "FULL_IMAGE_LOADED";
 
-    private TouchFilterableLinearLayout view;
-    private CardView selectionContainer;
+    private View view;
     private FrameLayout errorViewContainer;
     private FrameLayout imageContainer;
     private ImageView mapImageView;
@@ -108,13 +98,11 @@ public class LocationMessageViewController extends RetryMessageViewController im
 
     public LocationMessageViewController(Context context, MessageViewsContainer messageViewContainer) {
         super(context, messageViewContainer);
-        view = (TouchFilterableLinearLayout) View.inflate(context, R.layout.row_conversation_location, null);
+        view = View.inflate(context, R.layout.row_conversation_location, null);
 
-        selectionContainer = ViewUtils.getView(view, R.id.cv__location_map_container);
         errorViewContainer = ViewUtils.getView(view, R.id.fl__row_conversation__message_error_container);
         imageContainer = ViewUtils.getView(view, R.id.fl__row_conversation__map_image_container);
         imageContainer.setOnClickListener(this);
-        imageContainer.setOnLongClickListener(this);
         mapImageView = ViewUtils.getView(view, R.id.biv__row_conversation__map_image);
         locationName = ViewUtils.getView(view, R.id.ttv__row_conversation_map_name);
         mapPlaceholderText = ViewUtils.getView(view, R.id.ttv__row_conversation_map_image_placeholder_text);
@@ -134,7 +122,7 @@ public class LocationMessageViewController extends RetryMessageViewController im
     }
 
     @Override
-    public TouchFilterableLayout getView() {
+    public View getView() {
         return view;
     }
 
@@ -253,40 +241,7 @@ public class LocationMessageViewController extends RetryMessageViewController im
     }
 
     @Override
-    public boolean onLongClick(View v) {
-        if (message == null ||
-            messageViewsContainer == null ||
-            messageViewsContainer.isTornDown() ||
-            getSelectionView() == null) {
-            return false;
-        }
-        messageViewsContainer.getControllerFactory().getMessageActionModeController().selectMessage(message);
-        return true;
-    }
-
-    @Override
-    protected void setSelected(boolean selected) {
-        super.setSelected(selected);
-        if (message == null ||
-            messageViewsContainer == null ||
-            messageViewsContainer.isTornDown() ||
-            getSelectionView() == null) {
-            return;
-        }
-        final int accentColor = messageViewsContainer.getControllerFactory().getAccentColorController().getColor();
-        int targetAccentColor;
-        if (selected) {
-            targetAccentColor = ColorUtils.injectAlpha(selectionAlpha, accentColor);
-        } else {
-            targetAccentColor = ContextCompat.getColor(context, R.color.transparent);
-        }
-        selectionContainer.setForeground(new ColorDrawable(targetAccentColor));
-        selectionContainer.setForegroundGravity(Gravity.FILL);
-    }
-
-    @Override
     public void onAccentColorHasChanged(Object sender, int color) {
-        super.onAccentColorHasChanged(sender, color);
         pinView.setTextColor(color);
     }
 }

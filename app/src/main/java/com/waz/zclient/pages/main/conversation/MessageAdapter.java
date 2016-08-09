@@ -126,7 +126,7 @@ public class MessageAdapter extends BaseAdapter {
 
         if (convertView == null) {
             messageAndSeparator = createNewMessageAndSeparatorViewController(parent, message);
-            convertView = messageAndSeparator.getView().getLayout();
+            convertView = messageAndSeparator.getView();
             convertView.setTag(messageAndSeparator);
         } else {
             messageAndSeparator = (MessageAndSeparatorViewController) convertView.getTag();
@@ -134,7 +134,7 @@ public class MessageAdapter extends BaseAdapter {
                 message.getMessageType() == Message.Type.RICH_MEDIA) {
                 // Link preview messages can change from TEXT type to RICH MEDIA
                 messageAndSeparator = createNewMessageAndSeparatorViewController(parent, message);
-                convertView = messageAndSeparator.getView().getLayout();
+                convertView = messageAndSeparator.getView();
                 convertView.setTag(messageAndSeparator);
             }
         }

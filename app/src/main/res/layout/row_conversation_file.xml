@@ -18,10 +18,10 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.ui.views.TouchFilterableFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                                     xmlns:app="http://schemas.android.com/apk/res-auto"
-                                                     android:layout_width="match_parent"
-                                                     android:layout_height="wrap_content"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             xmlns:app="http://schemas.android.com/apk/res-auto"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
     >
 
     <com.waz.zclient.pages.main.conversation.views.row.message.views.ProgressDotsView
@@ -34,7 +34,7 @@
         android:visibility="gone"
         />
 
-    <com.waz.zclient.ui.views.TouchFilterableLinearLayout
+    <LinearLayout
         android:id="@+id/ll__row_conversation__file__message_container"
         android:layout_width="match_parent"
         android:layout_height="@dimen/content__audio_message__view_height"
@@ -62,19 +62,19 @@
                 android:textSize="@dimen/content__audio_message__glyph_size"
                 />
 
-                <com.waz.zclient.ui.text.GlyphTextView
-                    android:id="@+id/gtv__row_conversation__download_done_indicator"
-                    android:layout_width="@dimen/content__audio_message__download_done_indicator__size"
-                    android:layout_height="@dimen/content__audio_message__download_done_indicator__size"
-                    android:layout_marginTop="@dimen/content__audio_message__download_done_indicator__offset_top"
-                    android:layout_marginLeft="@dimen/content__audio_message__download_done_indicator__offset_left"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:textSize="@dimen/wire__text_size__tiny"
-                    android:text="@string/glyph__check"
-                    android:textColor="?wirePrimaryTextColorReverted"
-                    android:background="?messageStreamFileDownloadDoneIndicatorBackground"
-                    />
+            <com.waz.zclient.ui.text.GlyphTextView
+                android:id="@+id/gtv__row_conversation__download_done_indicator"
+                android:layout_width="@dimen/content__audio_message__download_done_indicator__size"
+                android:layout_height="@dimen/content__audio_message__download_done_indicator__size"
+                android:layout_marginTop="@dimen/content__audio_message__download_done_indicator__offset_top"
+                android:layout_marginLeft="@dimen/content__audio_message__download_done_indicator__offset_left"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:textSize="@dimen/wire__text_size__tiny"
+                android:text="@string/glyph__check"
+                android:textColor="?wirePrimaryTextColorReverted"
+                android:background="?messageStreamFileDownloadDoneIndicatorBackground"
+                />
 
         </FrameLayout>
 
@@ -108,6 +108,6 @@
 
         </LinearLayout>
 
-    </com.waz.zclient.ui.views.TouchFilterableLinearLayout>
+    </LinearLayout>
 
-</com.waz.zclient.ui.views.TouchFilterableFrameLayout>
+</FrameLayout>

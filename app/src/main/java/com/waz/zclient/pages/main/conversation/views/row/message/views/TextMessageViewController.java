@@ -22,41 +22,24 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import com.waz.zclient.R;
-import com.waz.zclient.controllers.selection.MessageActionModeController;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
 import com.waz.zclient.pages.main.conversation.views.row.message.RetryMessageViewController;
 import com.waz.zclient.pages.main.conversation.views.row.separator.Separator;
-import com.waz.zclient.ui.views.TouchFilterableLayout;
-import com.waz.zclient.ui.views.TouchFilterableLinearLayout;
 import com.waz.zclient.utils.ViewUtils;
 
 
-public class TextMessageViewController extends RetryMessageViewController implements MessageActionModeController.Selectable {
+public class TextMessageViewController extends RetryMessageViewController {
 
-    private TouchFilterableLinearLayout view;
+    private View view;
     private TextMessageWithTimestamp textWithTimestamp;
 
     @SuppressLint("InflateParams")
     public TextMessageViewController(Context context, final MessageViewsContainer messageViewContainer) {
         super(context, messageViewContainer);
         LayoutInflater inflater = LayoutInflater.from(context);
-        view = (TouchFilterableLinearLayout) inflater.inflate(R.layout.row_conversation_text_message, null);
+        view = inflater.inflate(R.layout.row_conversation_text_message, null);
         textWithTimestamp = ViewUtils.getView(view, R.id.tmwt__message_and_timestamp);
         textWithTimestamp.setMessageViewsContainer(messageViewContainer);
-        textWithTimestamp.setOnLongClickListener(new View.OnLongClickListener() {
-            @Override
-            public boolean onLongClick(View v) {
-                if (message == null ||
-                    messageViewContainer == null ||
-                    messageViewContainer.getControllerFactory() == null ||
-                    messageViewContainer.getControllerFactory().isTornDown()) {
-                    return false;
-                }
-                messageViewContainer.getControllerFactory().getMessageActionModeController().selectMessage(message);
-                return true;
-            }
-        });
-
         afterInit();
     }
 
@@ -67,7 +50,7 @@ public class TextMessageViewController extends RetryMessageViewController implem
     }
 
     @Override
-    public TouchFilterableLayout getView() {
+    public View getView() {
         return view;
     }
 

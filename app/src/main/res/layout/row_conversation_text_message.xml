@@ -18,14 +18,14 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<com.waz.zclient.ui.views.TouchFilterableLinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                                                      xmlns:app="http://schemas.android.com/apk/res-auto"
-                                                      android:layout_width="match_parent"
-                                                      android:layout_height="wrap_content"
-                                                      android:orientation="horizontal"
-                                                      android:gravity="center"
-                                                      android:paddingRight="@dimen/content__row__padding_right"
-                                                      android:baselineAligned="false"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+              android:gravity="center"
+              android:paddingRight="@dimen/content__row__padding_right"
+              android:baselineAligned="false"
     >
 
     <com.waz.zclient.pages.main.conversation.views.row.message.views.TextMessageWithTimestamp
@@ -78,4 +78,4 @@
 
     </com.waz.zclient.ui.views.BoundLayout>
 
-</com.waz.zclient.ui.views.TouchFilterableLinearLayout>
+</LinearLayout>

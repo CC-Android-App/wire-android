@@ -31,13 +31,11 @@ import com.waz.api.UpdateListener;
 import com.waz.api.User;
 import com.waz.zclient.R;
 import com.waz.zclient.pages.main.conversation.views.MessageViewsContainer;
-import com.waz.zclient.ui.views.TouchFilterableLayout;
 import com.waz.zclient.pages.main.conversation.views.row.message.ConversationItemViewController;
 import com.waz.zclient.pages.main.participants.dialog.DialogLaunchMode;
 import com.waz.zclient.ui.text.TypefaceTextView;
 import com.waz.zclient.ui.theme.ThemeUtils;
 import com.waz.zclient.ui.utils.BitmapUtils;
-import com.waz.zclient.ui.views.TouchFilterableLinearLayout;
 import com.waz.zclient.utils.DateConvertUtils;
 import com.waz.zclient.utils.ViewUtils;
 import com.waz.zclient.utils.ZTimeFormatter;
@@ -52,7 +50,7 @@ public class SeparatorViewController implements ConversationItemViewController,
     private Resources resources;
     private Context context;
 
-    private TouchFilterableLinearLayout view;
+    private View view;
     private LinearLayout timestampLinearLayout;
     private TypefaceTextView timestampTextview;
     private View timestampDivider;
@@ -70,7 +68,7 @@ public class SeparatorViewController implements ConversationItemViewController,
         this.resources = context.getResources();
         this.is24HourFormat = DateFormat.is24HourFormat(context);
 
-        view = (TouchFilterableLinearLayout) View.inflate(context, R.layout.row_conversation_separator, null);
+        view = View.inflate(context, R.layout.row_conversation_separator, null);
         userNameTextView = ViewUtils.getView(view, R.id.ttv__row_conversation__separator__name);
         timestampLinearLayout = ViewUtils.getView(view, R.id.ll__row_conversation__separator_time);
         timestampDivider = ViewUtils.getView(view, R.id.v__row_conversation__separator__time__divider);
@@ -391,7 +389,7 @@ public class SeparatorViewController implements ConversationItemViewController,
     }
 
     @Override
-    public TouchFilterableLayout getView() {
+    public View getView() {
         return view;
     }
 

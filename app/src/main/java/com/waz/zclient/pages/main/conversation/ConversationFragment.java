@@ -58,29 +58,7 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.waz.api.Asset;
-import com.waz.api.AssetFactory;
-import com.waz.api.AssetForUpload;
-import com.waz.api.AssetStatus;
-import com.waz.api.AudioAssetForUpload;
-import com.waz.api.AudioEffect;
-import com.waz.api.ConversationsList;
-import com.waz.api.ErrorsList;
-import com.waz.api.IConversation;
-import com.waz.api.ImageAsset;
-import com.waz.api.ImageAssetFactory;
-import com.waz.api.InputStateIndicator;
-import com.waz.api.Message;
-import com.waz.api.MessageContent;
-import com.waz.api.MessagesList;
-import com.waz.api.NetworkMode;
-import com.waz.api.OtrClient;
-import com.waz.api.SyncIndicator;
-import com.waz.api.SyncState;
-import com.waz.api.UpdateListener;
-import com.waz.api.User;
-import com.waz.api.UsersList;
-import com.waz.api.Verification;
+import com.waz.api.*;
 import com.waz.zclient.BuildConfig;
 import com.waz.zclient.OnBackPressedListener;
 import com.waz.zclient.R;
@@ -99,16 +77,11 @@ import com.waz.zclient.controllers.navigation.NavigationControllerObserver;
 import com.waz.zclient.controllers.navigation.Page;
 import com.waz.zclient.controllers.navigation.PagerControllerObserver;
 import com.waz.zclient.controllers.permission.RequestPermissionsObserver;
-import com.waz.zclient.controllers.selection.IMessageActionModeController;
-import com.waz.zclient.controllers.selection.MessageActionModeObserver;
 import com.waz.zclient.controllers.singleimage.SingleImageObserver;
 import com.waz.zclient.controllers.streammediaplayer.StreamMediaBarObserver;
 import com.waz.zclient.controllers.tracking.ITrackingController;
 import com.waz.zclient.controllers.tracking.events.conversation.CopiedMessageEvent;
-import com.waz.zclient.controllers.tracking.events.conversation.DeletedMessageEvent;
-import com.waz.zclient.controllers.tracking.events.conversation.ForwardedMessageEvent;
 import com.waz.zclient.controllers.tracking.events.conversation.OpenedMessageActionEvent;
-import com.waz.zclient.controllers.tracking.events.conversation.SelectedMessageEvent;
 import com.waz.zclient.controllers.tracking.events.navigation.OpenedMoreActionsEvent;
 import com.waz.zclient.core.api.scala.ModelObserver;
 import com.waz.zclient.core.controllers.tracking.attributes.RangedAttribute;
@@ -196,7 +169,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                                                                                                   OnBackPressedListener,
                                                                                                   CursorCallback,
                                                                                                   AudioMessageRecordingView.Callback,
-                                                                                                  MessageActionModeObserver,
                                                                                                   RequestPermissionsObserver,
                                                                                                   CursorImagesPreviewLayout.Callback,
                                                                                                   AssetIntentsManager.Callback,
@@ -630,7 +602,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         getStoreFactory().getInAppNotificationStore().addInAppNotificationObserver(this);
 
         getControllerFactory().getSlidingPaneController().addObserver(this);
-        getControllerFactory().getMessageActionModeController().addObserver(this);
         getStoreFactory().getNetworkStore().addNetworkStoreObserver(this);
 
         typingIndicatorView.setSelfUser(getStoreFactory().getProfileStore().getSelfUser());
@@ -689,7 +660,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         listView.unregistVisibleMessagesChangedListener(this);
         listView.unregisterScrolledToBottomListener(this);
         getControllerFactory().getSlidingPaneController().removeObserver(this);
-        getControllerFactory().getMessageActionModeController().removeObserver(this);
         getControllerFactory().getConversationScreenController().setConversationStreamUiReady(false);
         getControllerFactory().getRequestPermissionsController().removeObserver(this);
         super.onStop();
@@ -819,8 +789,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
 
         messageStreamManager.setConversation(toConversation,
                                              getControllerFactory().getNavigationController().getCurrentPage() != Page.MESSAGE_STREAM);
-
-        getControllerFactory().getMessageActionModeController().finishActionMode();
 
         getControllerFactory().getConversationScreenController().setSingleConversation(toConversation.getType() == IConversation.Type.ONE_TO_ONE);
 
@@ -1042,7 +1010,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     @Override
     public void onKeyboardVisibilityChanged(boolean keyboardIsVisible, int keyboardHeight, View currentFocus) {
         cursorLayout.notifyKeyboardVisibilityChanged(keyboardIsVisible, currentFocus);
-        getControllerFactory().getMessageActionModeController().finishActionMode();
 
         if (keyboardIsVisible && getControllerFactory().getFocusController().getCurrentFocus() == IFocusController.CONVERSATION_CURSOR) {
             messageStreamManager.onCursorStateEdit();
@@ -1082,7 +1049,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 inputStateIndicator.textCleared();
             } else {
                 inputStateIndicator.textChanged();
-                getControllerFactory().getMessageActionModeController().finishActionMode();
             }
             if (!getStoreFactory().getNetworkStore().hasInternetConnection()) {
                 cursorLayout.enableGiphyButton(false);
@@ -1478,7 +1444,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
     @SuppressLint("NewApi")
     @Override
     public void onCursorButtonClicked(CursorMenuItem cursorMenuItem) {
-        getControllerFactory().getMessageActionModeController().finishActionMode();
 
         final boolean isGroupConversation = getConversationType() == IConversation.Type.GROUP;
         switch (cursorMenuItem) {
@@ -1683,49 +1648,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             return true;
         }
         return false;
-    }
-
-    @Override
-    public void onMessageSelectionChanged(Set<Message> selectedMessages) {
-        if (toolbar == null ||
-            getControllerFactory() == null) {
-            return;
-        }
-        if (selectedMessages.size() > 0 && actionMode == null) {
-            actionMode = toolbar.startActionMode(new ToolbarActionModeCallback(getActivity(),
-                                                                               getControllerFactory().getMessageActionModeController(),
-                                                                               getControllerFactory().getTrackingController()));
-        } else if (selectedMessages.size() == 0) {
-            getControllerFactory().getMessageActionModeController().finishActionMode();
-        }
-    }
-
-    @Override
-    public void onMessageSelected(Message message) {
-        boolean multipleMessagesSelected = getControllerFactory().getMessageActionModeController().getSelectedMessages().size() > 1;
-        getControllerFactory().getTrackingController().tagEvent(new SelectedMessageEvent(TrackingUtils.messageTypeForMessageSelection(
-            message.getMessageType()),
-                                                                                         multipleMessagesSelected,
-                                                                                         getConversationTypeString()));
-    }
-
-    @Override
-    public void onActionModeStarted() {
-        enablePager(false);
-    }
-
-    @Override
-    public void onActionModeFinished() {
-        enablePager(true);
-    }
-
-    @Override
-    public void onFinishActionMode() {
-        if (actionMode == null) {
-            return;
-        }
-        actionMode.finish();
-        actionMode = null;
     }
 
     @Override
@@ -2165,20 +2087,16 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         void onOpenUrl(String url);
     }
 
-    private static final class ToolbarActionModeCallback implements ActionMode.Callback,
-                                                                    MessageActionModeObserver {
+    private static final class ToolbarActionModeCallback implements ActionMode.Callback {
         private Activity activity;
-        private IMessageActionModeController actionModeController;
         private ITrackingController trackingController;
         private MenuItem copyItem;
         private MenuItem fwdItem;
         private AlertDialog dialog;
 
         ToolbarActionModeCallback(Activity activity,
-                                  IMessageActionModeController actionModeController,
                                   ITrackingController trackingController) {
             this.activity = activity;
-            this.actionModeController = actionModeController;
             this.trackingController = trackingController;
         }
 
@@ -2189,8 +2107,6 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
             copyItem = menu.findItem(R.id.action_copy);
             fwdItem = menu.findItem(R.id.action_fwd);
             updateMenuItemVisibility();
-            actionModeController.addObserver(this);
-            actionModeController.onActionModeStarted();
             return true;
         }
 
@@ -2202,17 +2118,14 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
         @Override
         public boolean onActionItemClicked(final ActionMode mode, MenuItem item) {
             if (activity == null ||
-                trackingController == null ||
-                actionModeController == null ||
-                actionModeController.getSelectedMessages() == null ||
-                actionModeController.getSelectedMessages().size() < 1) {
+                trackingController == null) {
                 return false;
             }
             final Message message;
             switch (item.getItemId()) {
                 case R.id.action_copy:
                     // Copy is just supported for one message
-                    message = actionModeController.getSelectedMessages().iterator().next();
+                    message = null; //actionModeController.getSelectedMessages().iterator().next();
                     ClipboardManager clipboard = (ClipboardManager) activity.getSystemService(Context.CLIPBOARD_SERVICE);
                     ClipData clip = ClipData.newPlainText(activity.getString(R.string.conversation__action_mode__copy__description,
                                                                              message.getUser().getDisplayName()),
@@ -2228,12 +2141,12 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     mode.finish();
                     break;
                 case R.id.action_delete:
-                    final int messageCount = actionModeController.getSelectedMessages().size();
+//                    final int messageCount = actionModeController.getSelectedMessages().size();
                     dialog = new AlertDialog.Builder(activity)
                         .setTitle(activity.getResources().getQuantityString(R.plurals.conversation__action_mode__delete__dialog__title,
-                                                                            messageCount))
+                                                                            0))
                         .setMessage(activity.getResources().getQuantityString(R.plurals.conversation__action_mode__delete__dialog__message,
-                                                                              messageCount))
+                                                                              0))
                         .setCancelable(true)
                         .setNegativeButton(R.string.conversation__action_mode__delete__dialog__cancel, null)
                         .setPositiveButton(R.string.conversation__action_mode__delete__dialog__ok,
@@ -2241,20 +2154,18 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                                                @Override
                                                public void onClick(DialogInterface dialog, int which) {
                                                    if (mode == null ||
-                                                       trackingController == null ||
-                                                       actionModeController == null ||
-                                                       actionModeController.getSelectedMessages() == null) {
+                                                       trackingController == null) {
                                                        return;
                                                    }
 
-                                                   for (Message message : actionModeController.getSelectedMessages()) {
-                                                       message.delete();
-                                                   }
+//                                                   for (Message message : actionModeController.getSelectedMessages()) {
+//                                                       message.delete();
+//                                                   }
 
-                                                   trackingController.tagEvent(OpenedMessageActionEvent.delete());
-                                                   boolean multipleMessagesSelected = actionModeController.getSelectedMessages().size() > 1;
-                                                   trackingController.tagEvent(new DeletedMessageEvent(
-                                                       multipleMessagesSelected));
+//                                                   trackingController.tagEvent(OpenedMessageActionEvent.delete());
+//                                                   boolean multipleMessagesSelected = actionModeController.getSelectedMessages().size() > 1;
+//                                                   trackingController.tagEvent(new DeletedMessageEvent(
+//                                                       multipleMessagesSelected));
 
                                                    mode.finish();
 
@@ -2265,10 +2176,10 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                     break;
                 case R.id.action_fwd:
                     // Fwd is just supported for one message
-                    message = actionModeController.getSelectedMessages().iterator().next();
+                    message = null; //actionModeController.getSelectedMessages().iterator().next();
 
-                    trackingController.tagEvent(OpenedMessageActionEvent.forward());
-                    trackingController.tagEvent(new ForwardedMessageEvent(message.getMessageType().toString()));
+//                    trackingController.tagEvent(OpenedMessageActionEvent.forward());
+//                    trackingController.tagEvent(new ForwardedMessageEvent(message.getMessageType().toString()));
 
                     final ShareCompat.IntentBuilder intentBuilder = ShareCompat.IntentBuilder.from(activity);
                     intentBuilder.setChooserTitle(R.string.conversation__action_mode__fwd__chooser__title);
@@ -2360,48 +2271,12 @@ public class ConversationFragment extends BaseFragment<ConversationFragment.Cont
                 dialog.dismiss();
                 dialog = null;
             }
-            actionModeController.removeObserver(this);
-            actionModeController.onActionModeFinished();
-            actionModeController = null;
             trackingController = null;
             copyItem = null;
         }
 
-        @Override
-        public void onMessageSelectionChanged(Set<Message> selectedMessages) {
-            if (selectedMessages.size() == 0) {
-                return;
-            }
-            updateMenuItemVisibility();
-        }
-
-        @Override
-        public void onMessageSelected(Message message) {
-
-        }
-
-        @Override
-        public void onFinishActionMode() {
-        }
-
-        @Override
-        public void onActionModeStarted() {
-        }
-
-        @Override
-        public void onActionModeFinished() {
-        }
 
         private void updateMenuItemVisibility() {
-            if (actionModeController.getSelectedMessages().size() > 1) {
-                copyItem.setVisible(false);
-                fwdItem.setVisible(false);
-                return;
-            }
-
-            final Message message = actionModeController.getSelectedMessages().iterator().next();
-            copyItem.setVisible(isCopyAllowedMessage(message));
-            fwdItem.setVisible(isForwardAllowedMessage(message));
         }
 
         private boolean isForwardAllowedMessage(Message message) {

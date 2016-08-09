@@ -101,7 +101,6 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
     private GestureDetectorCompat gestureDetector;
     private int animationDuration;
     private String messageId;
-    private OnLongClickListener longClickListener;
 
     public TextMessageWithTimestamp(Context context) {
         this(context, null);
@@ -132,14 +131,6 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
         });
 
         gestureDetector = new GestureDetectorCompat(context, this);
-    }
-
-    @Override
-    public void setOnLongClickListener(OnLongClickListener l) {
-        if (!gestureDetector.isLongpressEnabled()) {
-            gestureDetector.setIsLongpressEnabled(l != null);
-        }
-        this.longClickListener = l;
     }
 
     public void setMessage(final Message message) {
@@ -276,7 +267,6 @@ public class TextMessageWithTimestamp extends LinearLayout implements AccentColo
     @Override
     public void onLongPress(MotionEvent e) {
         performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
-        longClickListener.onLongClick(this);
     }
 
     @Override
